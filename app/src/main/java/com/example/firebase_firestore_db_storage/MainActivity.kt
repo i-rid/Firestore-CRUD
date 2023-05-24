@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import com.example.firebase_firestore_db_storage.databinding.ActivityMainBinding
 import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,10 @@ class MainActivity : AppCompatActivity() {
             saveUser(User(fName, lName, age))
         }
 
+        binding.btnRetrieveData.setOnClickListener {
+            retrieveUser()
+        }
+
     }
 
     private fun saveUser(user: User) = CoroutineScope(Dispatchers.IO).launch {
@@ -52,6 +57,23 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_LONG).show()
             }
 
+        }
+    }
+    private fun retrieveUser() = CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val querySnapshot = userCollectionRef.get().await()
+            val stringBuilder = StringBuilder()
+            for(doc in querySnapshot.documents){
+                val user = doc.toObject<User>()
+                stringBuilder.append("$user")
+            }
+            withContext(Dispatchers.Main){
+                binding.tvPersons.text = stringBuilder.toString()
+            }
+        }catch (e: Exception){
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@MainActivity, e.toString(), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
