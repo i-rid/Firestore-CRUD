@@ -33,9 +33,10 @@ class MainActivity : AppCompatActivity() {
             saveUser(User(fName, lName, age))
         }
 
-        binding.btnRetrieveData.setOnClickListener {
-            retrieveUser()
-        }
+//        binding.btnRetrieveData.setOnClickListener {
+//            retrieveUser()
+//        }
+        updateDataInRealTime()
 
     }
 
@@ -65,14 +66,32 @@ class MainActivity : AppCompatActivity() {
             val stringBuilder = StringBuilder()
             for(doc in querySnapshot.documents){
                 val user = doc.toObject<User>()
-                stringBuilder.append("$user")
+                stringBuilder.append("$user\n")
             }
             withContext(Dispatchers.Main){
                 binding.tvPersons.text = stringBuilder.toString()
             }
         }catch (e: Exception){
             withContext(Dispatchers.Main){
-                Toast.makeText(this@MainActivity, e.toString(), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateDataInRealTime(){
+        userCollectionRef.addSnapshotListener { querySnapshot, firebaseException ->
+            firebaseException?.let {
+                Toast.makeText(this@MainActivity,firebaseException.message,Toast.LENGTH_SHORT).show()
+                return@addSnapshotListener
+            }
+
+            querySnapshot?.let {
+                    val stringBuilder = StringBuilder()
+                    for(doc in it){
+                        val user = doc.toObject<User>()
+                        stringBuilder.append("$user\n")
+                    }
+                    binding.tvPersons.text = stringBuilder.toString()
             }
         }
     }
