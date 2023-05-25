@@ -33,10 +33,9 @@ class MainActivity : AppCompatActivity() {
             saveUser(User(fName, lName, age))
         }
 
-//        binding.btnRetrieveData.setOnClickListener {
-//            retrieveUser()
-//        }
-        updateDataInRealTime()
+        binding.btnRetrieveData.setOnClickListener {
+            retrieveUserByCustomQuery()
+        }
 
     }
 
@@ -92,6 +91,32 @@ class MainActivity : AppCompatActivity() {
                         stringBuilder.append("$user\n")
                     }
                     binding.tvPersons.text = stringBuilder.toString()
+            }
+        }
+    }
+    private fun retrieveUserByCustomQuery() = CoroutineScope(Dispatchers.IO).launch {
+        val fromAge = binding.etFrom.text.toString().toInt()
+        val toAge   = binding.etTo.text.toString().toInt()
+
+        try {
+            val querySnapshot = userCollectionRef
+                .whereGreaterThanOrEqualTo("age",fromAge)
+                .whereLessThanOrEqualTo("age",toAge)
+                .orderBy("age")
+                .get()
+                .await()
+            val stringBuilder = StringBuilder()
+            for(doc in querySnapshot.documents){
+                val user = doc.toObject<User>()
+                stringBuilder.append("$user\n")
+            }
+
+            withContext(Dispatchers.Main){
+                binding.tvPersons.text = stringBuilder.toString()
+            }
+        }catch (e: Exception){
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
             }
         }
     }
