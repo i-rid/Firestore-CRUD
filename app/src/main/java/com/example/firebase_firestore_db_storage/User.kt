@@ -1,7 +1,7 @@
 package com.example.firebase_firestore_db_storage
 
 data class User (
-    val fName:String = "def",
-    val lName:String = "def",
+    val fname:String = "def",
+    val lname:String = "def",
     val age:Int = 99983
 )
