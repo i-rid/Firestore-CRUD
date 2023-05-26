@@ -2,9 +2,9 @@ package com.example.firebase_firestore_db_storage
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import com.example.firebase_firestore_db_storage.databinding.ActivityMainBinding
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
@@ -33,8 +33,20 @@ class MainActivity : AppCompatActivity() {
             saveUser(User(fName, lName, age))
         }
 
+
+        binding.btnUploadData.setOnClickListener {
+            val user = getOldUserData()
+            saveUser(user)
+        }
+
         binding.btnRetrieveData.setOnClickListener {
             retrieveUserByCustomQuery()
+        }
+
+        binding.btnUpdatePerson.setOnClickListener {
+            val oldUser = getOldUserData()
+            val newPersonMap = getNewUserMap()
+            updateUserData(oldUser, newPersonMap)
         }
 
     }
@@ -94,6 +106,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun retrieveUserByCustomQuery() = CoroutineScope(Dispatchers.IO).launch {
         val fromAge = binding.etFrom.text.toString().toInt()
         val toAge   = binding.etTo.text.toString().toInt()
@@ -120,4 +133,61 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun updateUserData(user: User, newPersonMap: Map<String,Any>)= CoroutineScope(Dispatchers.IO).launch {
+        val userQuery = userCollectionRef
+            .whereEqualTo("fname",user.fname)
+            .whereEqualTo("lname",user.lname)
+            .whereEqualTo("age",  user.age)
+            .get()
+            .await()
+
+        if(userQuery.documents.isNotEmpty()){
+            for (doc in userQuery){
+                try {
+                    //to update just one field
+//                    userCollectionRef.document(doc.id).update("fname",user.fname).await()
+
+                    userCollectionRef
+                        .document(doc.id)
+                        .set(newPersonMap, SetOptions.merge())
+                        .await()
+
+                }catch (e:Exception){
+                    withContext(Dispatchers.Main){
+                        Toast.makeText(this@MainActivity,e.message,Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        else{
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@MainActivity,"No Match!!",Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+
+    //helper classes
+    private fun getOldUserData() : User{
+        val fName = binding.etFirstName.text.toString()
+        val lName = binding.etLastName.text.toString()
+        val age = binding.etAge.text.toString().toInt()
+
+        return User(fName, lName, age)
+    }
+
+    private fun getNewUserMap(): Map<String, Any> {
+        val firstName  = binding.etNewFirstName.text.toString()
+        val lastName  = binding.etNewLastName.text.toString()
+        val age  = binding.etNewAge.text.toString()
+
+        val map  = mutableMapOf<String,Any>()
+        if (firstName.isNotEmpty())map["fname"]=firstName
+        if (lastName.isNotEmpty())map["lname"]=lastName
+        if (age.isNotEmpty())map["age"]=age.toInt()
+        return map
+    }
+
 }
