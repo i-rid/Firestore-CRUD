@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import com.example.firebase_firestore_db_storage.databinding.ActivityMainBinding
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
@@ -49,6 +50,10 @@ class MainActivity : AppCompatActivity() {
             updateUserData(oldUser, newPersonMap)
         }
 
+        binding.btnDeletePerson.setOnClickListener {
+            val person = getOldUserData()
+            deleteUserData(person)
+        }
     }
 
     private fun saveUser(user: User) = CoroutineScope(Dispatchers.IO).launch {
@@ -167,7 +172,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun deleteUserData(user: User )= CoroutineScope(Dispatchers.IO).launch{
+        val userQuery = userCollectionRef
+            .whereEqualTo("fname",user.fname)
+            .whereEqualTo("lname",user.lname)
+            .whereEqualTo("age",  user.age)
+            .get()
+            .await()
 
+        if(userQuery.documents.isNotEmpty()){
+            for (doc in userQuery){
+                try {
+                    //to delete entire document
+//                    userCollectionRef
+//                        .document(doc.id)
+//                        .delete()
+//                        .await()
+                    //to delete specific field of a collection
+                    userCollectionRef
+                        .document(doc.id)
+                        .update(
+                            mapOf("fname" to FieldValue.delete())
+                            )
+                        .await()
+
+                }catch (e:Exception){
+                    withContext(Dispatchers.Main){
+                        Toast.makeText(this@MainActivity,e.message,Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        else{
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@MainActivity,"No Match!!",Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     //helper classes
     private fun getOldUserData() : User{
