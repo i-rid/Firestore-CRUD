@@ -54,10 +54,14 @@ class MainActivity : AppCompatActivity() {
             val person = getOldUserData()
             deleteUserData(person)
         }
+
+        binding.btnBatchWrite.setOnClickListener {
+            changeUserName("Bm8LqAXPFpqW4RbV39Rx","ChatGPT","OpenAI")
+        }
     }
 
     private fun saveUser(user: User) = CoroutineScope(Dispatchers.IO).launch {
-        var result:String = ""
+        var result = ""
         try{
             userCollectionRef
                 .add(user)
@@ -67,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 .await()
 
             withContext(Dispatchers.Main){
-                Toast.makeText(this@MainActivity,if (result!="")result.toString() else "error",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity,if (result!="") result else "error",Toast.LENGTH_SHORT).show()
             }
         }catch (e:Exception){
             withContext(Dispatchers.Main) {
@@ -206,6 +210,27 @@ class MainActivity : AppCompatActivity() {
         else{
             withContext(Dispatchers.Main){
                 Toast.makeText(this@MainActivity,"No Match!!",Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun changeUserName(
+        userId:String,
+        newFName:String,
+        newLName:String
+    ) = CoroutineScope(Dispatchers.IO).launch {
+        try {
+            Firebase
+                .firestore
+                .runBatch { batch ->
+                    val userRefId = userCollectionRef.document(userId)
+                batch.update(userRefId,"fname",newFName)
+                batch.update(userRefId,"lname",newLName)
+            }.await()
+
+        }catch (e:Exception){
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
             }
         }
     }
