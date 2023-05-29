@@ -58,7 +58,12 @@ class MainActivity : AppCompatActivity() {
         binding.btnBatchWrite.setOnClickListener {
             changeUserName("Bm8LqAXPFpqW4RbV39Rx","ChatGPT","OpenAI")
         }
+
+        binding.btnTransaction.setOnClickListener {
+            ageUpdateByOne("Bm8LqAXPFpqW4RbV39Rx")
+        }
     }
+
 
     private fun saveUser(user: User) = CoroutineScope(Dispatchers.IO).launch {
         var result = ""
@@ -224,6 +229,23 @@ class MainActivity : AppCompatActivity() {
             Firebase.firestore.runBatch { batch ->
                 batch.update(userRefId, "fname", newFName)
                 batch.update(userRefId, "lname", newLName)
+            }.await()
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main){
+                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun ageUpdateByOne(userid: String)  = CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val userRefId = userCollectionRef.document(userid)
+
+            Firebase.firestore.runTransaction { transaction ->
+                val user    = transaction.get(userRefId)
+                val newAge = user["age"] as Long + 1
+                transaction.update(userRefId,"age",newAge)
+                null
             }.await()
         } catch (e: Exception) {
             withContext(Dispatchers.Main){
