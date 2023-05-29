@@ -215,20 +215,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun changeUserName(
-        userId:String,
-        newFName:String,
-        newLName:String
-    ) = CoroutineScope(Dispatchers.IO).launch {
+        userId: String,
+        newFName: String,
+        newLName: String) = CoroutineScope(Dispatchers.IO).launch {
         try {
-            Firebase
-                .firestore
-                .runBatch { batch ->
-                    val userRefId = userCollectionRef.document(userId)
-                batch.update(userRefId,"fname",newFName)
-                batch.update(userRefId,"lname",newLName)
-            }.await()
+            val userRefId = userCollectionRef.document(userId)
 
-        }catch (e:Exception){
+            Firebase.firestore.runBatch { batch ->
+                batch.update(userRefId, "fname", newFName)
+                batch.update(userRefId, "lname", newLName)
+            }.await()
+        } catch (e: Exception) {
             withContext(Dispatchers.Main){
                 Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
             }
